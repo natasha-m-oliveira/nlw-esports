@@ -1,8 +1,11 @@
+import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { useKeenSlider } from 'keen-slider/react';
 import { GameBanner } from './components/GameBanner';
 import { CreateAdBanner } from './components/CreateAdBanner';
 import * as Dialog from '@radix-ui/react-dialog';
 
+import 'keen-slider/keen-slider.min.css';
 import './styles/main.css';
 import logoImg from './assets/logo-nlw-esports.svg';
 import { CreateAdModal } from './components/CreateAdModal';
@@ -19,16 +22,27 @@ interface Game {
 function App() {
   const [games, setGames] = useState<Game[]>([]);
 
+  const [ref] = useKeenSlider<HTMLDivElement>({
+    breakpoints: {
+      '(min-width: 400px)': {
+        slides: { perView: 2, spacing: 5 },
+      },
+      '(min-width: 700px)': {
+        slides: { perView: 3, spacing: 5 },
+      },
+      '(min-width: 1000px)': {
+        slides: { perView: 5, spacing: 10 },
+      },
+    },
+    slides: { perView: 1 },
+  });
+
   useEffect(() => {
-    fetch('http://localhost:3333/games')
-      .then((response) => response.json())
-      .then((data) => {
-        setGames(data);
-      });
+    axios('http://localhost:3333/games').then(({ data }) => setGames(data));
   }, []);
 
   return (
-    <div className="max-w-[1344px] mx-auto flex flex-col items-center my-20">
+    <div className="max-w-[1344px] mx-auto px-4 flex flex-col items-center my-20">
       <img src={logoImg} alt="" />
 
       <h1 className="text-6xl text-white font-black mt-20">
@@ -39,20 +53,21 @@ function App() {
         está aqui.
       </h1>
 
-      <div className="grid grid-cols-6 gap-6 mt-16">
-        {games.map(({ id, title, bannerUrl, _count }) => (
+      <div ref={ref} className="keen-slider mt-16">
+        {games.map(({ id, title, bannerUrl, _count }, index) => (
           <GameBanner
             key={id}
             title={title}
             bannerUrl={bannerUrl}
             adsCount={_count.ads}
+            className={`keen-slider__slide number-slide${index + 1}`}
           />
         ))}
       </div>
 
       <Dialog.Root>
         <CreateAdBanner />
-        <CreateAdModal />
+        <CreateAdModal games={games} />
       </Dialog.Root>
     </div>
   );
