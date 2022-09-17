@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Image, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 
 import logoImg from '../../assets/logo-nlw-esports.png';
 
@@ -20,10 +21,12 @@ export function Home() {
     navigation.navigate('game', { id, title, bannerUrl });
   }
   useEffect(() => {
-    setGames(GAMES);
-    // fetch('http://localhost:3333/games')
-    //   .then((response) => response.json())
-    //   .then((data) => setGames(data));
+    axios
+      .get('http://192.168.0.8:3333/games')
+      .then(({ data }) => setGames(data))
+      .catch((error) => {
+        console.log(error);
+      });
   }, []);
 
   return (
@@ -32,8 +35,8 @@ export function Home() {
         <Image source={logoImg} style={styles.logo} />
 
         <Heading
-          title='Encontre seu duo!'
-          subtitle='Selecione o game que deseja jogar...'
+          title="Encontre seu duo!"
+          subtitle="Selecione o game que deseja jogar..."
         />
 
         <FlatList

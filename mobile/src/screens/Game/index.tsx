@@ -3,11 +3,13 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Entypo } from '@expo/vector-icons';
+import axios from 'axios';
 
 import { GameParams } from '../../@types/navigation';
+import { DuoCard, DuoCardProps } from '../../components/DuoCard';
 import { Background } from '../../components/Background';
 import { Heading } from '../../components/Heading';
-import { DuoCard, DuoCardProps } from '../../components/DuoCard';
+import { DuoMatch } from '../../components/DuoMatch';
 
 import logoImg from '../../assets/logo-nlw-esports.png';
 
@@ -17,6 +19,7 @@ import { ADS } from '../../utils/ads';
 
 export function Game() {
   const [duos, setDuos] = useState<DuoCardProps[]>([]);
+  const [discordDuoSelected, setDiscordDuoSelected] = useState('');
 
   const navigation = useNavigation();
   const route = useRoute();
@@ -26,12 +29,22 @@ export function Game() {
     navigation.goBack();
   }
 
+  function getDiscordUser(adsId: string) {
+    axios
+      .get(`http://192.168.0.8:3333/ads/${adsId}/discord`)
+      .then(({ data }) => setDiscordDuoSelected(data.discord))
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
   useEffect(() => {
-    const ads = ADS.find((item) => item.id === game.id)?.ads;
-    setDuos(ads ? ads : []);
-    // fetch(`http://localhost:3333/games/${game.id}/ads`)
-    //   .then((response) => response.json())
-    //   .then((data) => setGames(data));
+    axios
+      .get(`http://192.168.0.8:3333/games/${game.id}/ads`)
+      .then(({ data }) => setDuos(data))
+      .catch((error) => {
+        console.log(error);
+      });
   }, []);
 
   return (
@@ -40,7 +53,7 @@ export function Game() {
         <View style={styles.header}>
           <TouchableOpacity onPress={handleGoBack}>
             <Entypo
-              name='chevron-thin-left'
+              name="chevron-thin-left"
               color={THEME.COLORS.CAPTION_300}
               size={20}
             />
@@ -53,16 +66,16 @@ export function Game() {
         <Image
           source={{ uri: game.bannerUrl }}
           style={styles.cover}
-          resizeMode='cover'
+          resizeMode="cover"
         />
 
-        <Heading title={game.title} subtitle='Conecte-se e comece a jogar!' />
+        <Heading title={game.title} subtitle="Conecte-se e comece a jogar!" />
 
         <FlatList
           data={duos}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <DuoCard data={item} onConnect={() => {}} />
+            <DuoCard data={item} onConnect={() => getDiscordUser(item.id)} />
           )}
           horizontal
           style={styles.containerList}
@@ -75,6 +88,12 @@ export function Game() {
               Não há anúncios publicados ainda.
             </Text>
           )}
+        />
+
+        <DuoMatch
+          visible={discordDuoSelected.length !== 0}
+          discord={discordDuoSelected}
+          onClose={() => setDiscordDuoSelected('')}
         />
       </SafeAreaView>
     </Background>
